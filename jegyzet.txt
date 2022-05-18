@@ -1,0 +1,182 @@
+Uj project: ASP.NET Core Web App(Model-View-Controller)
+Authentication: Individual Accunts
+
+1.
+Models/Add/Class - Aru
+{
+        public int Id { get; set; }
+
+        [Display(Name="Megnevezés")]
+        [StringLength(60)]
+        public string Megnevezes { get; set; }
+        
+        [Display(Name="Beszállító")]
+        [StringLength(30)]
+        public string Beszallito { get; set; }
+
+        [Display(Name ="Beszerzési Ár")]
+        [Column(TypeName="decimal(10,2)")]
+        public decimal Ar { get; set; }
+    }
+
+2.
+Controllers/Add/New Scaffolded Item - MVC Controller with view using Entity Framework - RaktarController
+
+3.
+Models/Add/Class - AruKeres
+
+{
+        public string Megnevezes { get; set; }
+        public string Beszallito { get; set; }
+        public List<Aru> AruLista { get; set; }
+        public SelectList BeszallitoLista { get; set; }
+    }
+
+4. Controllers/RaktarController
+
+// GET: Raktar
+        public async Task<IActionResult> Index(string Megnevezes, string Beszallito)
+        {
+            var model = new AruKeres();
+            var aruk = _context.Aru.Select(x=>x);
+            if (!string.IsNullOrEmpty(Megnevezes))
+            {
+                aruk = aruk.Where(x => x.Megnevezes.Contains(Megnevezes));
+                model.Megnevezes = Megnevezes;
+            }
+             if (!string.IsNullOrEmpty(Beszallito))
+            {
+                aruk = aruk.Where(x => x.Beszallito==Beszallito);
+                model.Beszallito=Beszallito;
+            }
+
+            model.AruLista = await aruk.OrderBy(x => x.Megnevezes).ToListAsync();
+            model.BeszallitoLista = new SelectList(await _context.Aru.Select(x=>x.Beszallito).Distinct().OrderBy(x=>x).ToListAsync());
+
+            return View(model);
+        }
+
+5. Views/Raktar/Index.cshtml
+
+@model RaktarInformatika0430.Models.AruKeres
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Index</h1>
+
+<p>
+    <a asp-action="Create">Create New</a>
+</p>
+<form asp-controller="Raktar" asp-action="Index" method="get">
+Megnevezés:
+<input asp-for="Megnevezes">
+
+Beszállító:
+<select asp-for="Beszallito" asp-items="Model.BeszallitoLista">
+<option value="">Összes</option>
+</select>
+<input type="submit" value="Keresés">
+</form>
+
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.AruLista[0].Megnevezes)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.AruLista[0].Beszallito)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.AruLista[0].Ar)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model.AruLista) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.Megnevezes)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Beszallito)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Ar)
+            </td>
+            <td>
+                <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
+                <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
+                <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>
+
+6.Controllers/RaktarController - Minden authorize(creat, delete,)
+
+// GET: Raktar/Create
+        [Authorize]
+
+.....
+
+// POST: Raktar/Create
+        // To protect from overposting attacks, enable the specific properties you want to bind to.
+        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize]
+
+......
+
+// GET: Raktar/Edit/5
+        [Authorize]
+
+......
+
+// POST: Raktar/Edit/5
+        // To protect from overposting attacks, enable the specific properties you want to bind to.
+        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize]
+
+......
+
+// GET: Raktar/Delete/5
+        [Authorize]
+
+......
+
+ // POST: Raktar/Delete/5
+        [HttpPost, ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        [Authorize]
+
+......
+
+7. Mentés
+
+8. Tools/NuGet Package Manager/Package Manager Console
+
+Add-Migration InitialCreate
+
+Update-Database
+
+9. Startup.cs
+
+ pattern: "{controller=Raktar}/{action=Index}/{id?}");
+
+10. Shared/_ValidationScriptsPartial.cshtml
+
+<script>
+  $.validator.methods.number = function (value, element) {
+        return this.optional(element) || /-?(?:\d+|\d{1,3}(?:[\s\.,]\d{3})+)(?:[\.,]\d+)?$/.test(value);
+    }
+</script>
+
